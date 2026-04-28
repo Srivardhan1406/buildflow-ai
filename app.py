@@ -1,119 +1,159 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, request, jsonify
+from pipeline.intent import extract_intent
+from pipeline.design import create_design
+from pipeline.schema import generate_schema
+from pipeline.validate import validate_schema
+from pipeline.repair import repair_schema
 import time
+import os
 
 app = Flask(__name__)
 
-# --------------------
+# ---------------------------------
 # Metrics Storage
-# --------------------
+# ---------------------------------
 stats = {
     "requests": 0,
     "success": 0,
+    "clarifications": 0,
     "failures": 0,
-    "total_latency_ms": 0,
-    "last_prompt": ""
+    "repairs": 0,
+    "total_latency_ms": 0
 }
 
-# --------------------
-# Home Page
-# --------------------
-@app.route('/')
+
+# ---------------------------------
+# Home Route
+# ---------------------------------
+@app.route("/")
 def home():
     return render_template("index.html")
 
-# --------------------
-# Validation
-# --------------------
-def validate(data):
-    required = ["pages", "database", "apis", "roles"]
 
-    for key in required:
-        if key not in data:
-            data[key] = []
-
-    return data
-
-# --------------------
-# Generate Schema
-# --------------------
-@app.route('/generate', methods=['POST'])
+# ---------------------------------
+# Generate Route
+# ---------------------------------
+@app.route("/generate", methods=["POST"])
 def generate():
 
     start = time.time()
     stats["requests"] += 1
 
     try:
-        prompt = request.json["prompt"].lower()
-        stats["last_prompt"] = prompt
+        body = request.get_json()
 
-        data = {
-            "pages": ["home"],
-            "database": ["users"],
-            "apis": [],
-            "roles": ["user"]
-        }
+        if not body or "prompt" not in body:
+            stats["failures"] += 1
+            return jsonify({
+                "status": "failed",
+                "error": "Prompt is required"
+            }), 400
 
-        if "login" in prompt:
-            data["pages"].append("login")
-            data["apis"].append("/login")
+        prompt = body["prompt"].strip()
 
-        if "dashboard" in prompt:
-            data["pages"].append("dashboard")
-
-        if "admin" in prompt:
-            data["pages"].append("admin")
-            data["roles"].append("admin")
-
-        if "cart" in prompt:
-            data["pages"].append("cart")
-            data["database"].append("cart")
-            data["apis"].append("/cart")
-
-        if "payment" in prompt or "payments" in prompt:
-            data["database"].append("payments")
-            data["apis"].append("/payment")
-
-        if "crm" in prompt:
-            data["database"].append("contacts")
-            data["apis"].append("/contacts")
-
-        if "ecommerce" in prompt:
-            data["database"].append("products")
-            data["database"].append("orders")
-            data["apis"].append("/products")
-            data["apis"].append("/orders")
-
-        data = validate(data)
-
-        data["pages"] = list(set(data["pages"]))
-        data["database"] = list(set(data["database"]))
-        data["apis"] = list(set(data["apis"]))
-        data["roles"] = list(set(data["roles"]))
-
-        data["status"] = "validated"
-        data["pipeline"] = [
-            "intent_extraction",
-            "schema_generation",
-            "validation",
-            "deduplication"
+        # ---------------------------------
+        # Clarification Handling
+        # ---------------------------------
+        vague_inputs = [
+            "build app",
+            "make app",
+            "create app",
+            "build website",
+            "create platform"
         ]
 
+        if len(prompt) < 8 or prompt.lower() in vague_inputs:
+
+            stats["clarifications"] += 1
+
+            latency = int((time.time() - start) * 1000)
+            stats["total_latency_ms"] += latency
+
+            return jsonify({
+                "status": "clarification_required",
+                "needs_clarification": True,
+                "questions": [
+                    "What type of app do you want?",
+                    "Do you need login/authentication?",
+                    "Do you need admin dashboard?",
+                    "Do you need payments?",
+                    "Who are the users?"
+                ]
+            })
+
+        # ---------------------------------
+        # Stage 1: Intent Extraction
+        # ---------------------------------
+        intent = extract_intent(prompt)
+
+        # ---------------------------------
+        # Stage 2: System Design
+        # ---------------------------------
+        design = create_design(intent)
+
+        # ---------------------------------
+        # Stage 3: Schema Generation
+        # ---------------------------------
+        schema = generate_schema(design)
+
+        # ---------------------------------
+        # Stage 4: Validation
+        # ---------------------------------
+        schema = validate_schema(schema)
+
+        # ---------------------------------
+        # Stage 5: Repair
+        # ---------------------------------
+        before_pages = len(schema["pages"])
+        schema = repair_schema(schema)
+        after_pages = len(schema["pages"])
+
+        if before_pages != after_pages:
+            stats["repairs"] += 1
+
+        # ---------------------------------
+        # Final Metadata
+        # ---------------------------------
+        schema["status"] = "success"
+        schema["deterministic"] = True
+        schema["runtime_ready"] = True
+
+        schema["pipeline_trace"] = {
+            "stage_1": "intent_extraction",
+            "stage_2": "system_design",
+            "stage_3": "schema_generation",
+            "stage_4": "validation",
+            "stage_5": "repair"
+        }
+
+        # ---------------------------------
+        # Metrics Update
+        # ---------------------------------
         stats["success"] += 1
 
         latency = int((time.time() - start) * 1000)
         stats["total_latency_ms"] += latency
 
-        return jsonify(data)
+        schema["latency_ms"] = latency
+
+        return jsonify(schema)
 
     except Exception as e:
         stats["failures"] += 1
-        return jsonify({"error": str(e)}), 500
+
+        latency = int((time.time() - start) * 1000)
+        stats["total_latency_ms"] += latency
+
+        return jsonify({
+            "status": "failed",
+            "error": str(e)
+        }), 500
 
 
-# --------------------
+# ---------------------------------
 # Stats Route
-# --------------------
-@app.route('/stats')
+# ---------------------------------
+@app.route("/stats")
 def get_stats():
 
     avg = 0
@@ -121,18 +161,27 @@ def get_stats():
     if stats["requests"] > 0:
         avg = int(stats["total_latency_ms"] / stats["requests"])
 
+    success_rate = 0
+
+    if stats["requests"] > 0:
+        success_rate = round(
+            (stats["success"] / stats["requests"]) * 100, 2
+        )
+
     return jsonify({
         "requests": stats["requests"],
         "success": stats["success"],
+        "clarifications": stats["clarifications"],
         "failures": stats["failures"],
+        "repairs": stats["repairs"],
         "avg_latency_ms": avg,
-        "last_prompt": stats["last_prompt"]
+        "success_rate_percent": success_rate
     })
 
-# --------------------
+
+# ---------------------------------
 # Run App
-# --------------------
+# ---------------------------------
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)

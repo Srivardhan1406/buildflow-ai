@@ -1,133 +1,163 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BuildFlow AI</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2">
 </head>
 <body>
 
-<div class="container">
+<div class="app-wrapper">
 
-<h1>BuildFlow AI</h1>
-<p>Generate structured app architecture instantly</p>
+    <header class="main-header">
+        <h1>BuildFlow AI</h1>
+        <p>Generate structured app architecture instantly</p>
+    </header>
 
-<label>Describe your product idea</label>
+    <div class="content-container">
 
-<input
-type="text"
-id="prompt"
-placeholder="Build ecommerce app with login cart admin dashboard">
+        <!-- INPUT -->
+        <section class="section">
+            <label class="section-title">Describe your product idea</label>
 
-<div style="margin-top:10px; font-size:13px;">
-Try:
-<span onclick="fillPrompt('Build CRM app with login dashboard admin')">CRM</span> |
-<span onclick="fillPrompt('Build ecommerce app with login cart payments admin')">Ecommerce</span> |
-<span onclick="fillPrompt('Build job portal with login dashboard admin')">Job Portal</span>
-</div>
+            <textarea id="prompt"
+            placeholder="Build ecommerce app with login cart admin dashboard"></textarea>
 
-<button onclick="send()">Generate Schema</button>
+            <div class="chip-container">
+                <button class="chip-link" onclick="fillPrompt('Build CRM app with login dashboard admin')">CRM</button>
+                <button class="chip-link" onclick="fillPrompt('Build ecommerce app with login cart admin payments')">Ecommerce</button>
+                <button class="chip-link" onclick="fillPrompt('Build job portal with login dashboard admin')">Job Portal</button>
+            </div>
 
-<div id="loading" style="display:none; margin-top:15px;">
-Generating intelligent schema...
-</div>
+            <button class="btn-main" onclick="generateSchema()">Generate Schema</button>
+        </section>
 
-<!-- Metrics Section -->
-<div style="
-margin-top:18px;
-padding:15px;
-border-radius:14px;
-background:rgba(255,255,255,0.65);
-font-size:14px;
-line-height:1.8;
-">
+        <!-- METRICS -->
+        <section class="section metrics-panel">
+            <h3>System Metrics</h3>
 
-<b>System Metrics</b><br>
+            <div class="metrics-grid">
 
-Requests:
-<span id="req">0</span><br>
+                <div class="metric-box">
+                    <small>Requests</small>
+                    <strong id="req">0</strong>
+                </div>
 
-Success:
-<span id="success">0</span><br>
+                <div class="metric-box">
+                    <small>Success</small>
+                    <strong id="succ">0</strong>
+                </div>
 
-Failures:
-<span id="fail">0</span><br>
+                <div class="metric-box">
+                    <small>Failures</small>
+                    <strong id="fail">0</strong>
+                </div>
 
-Avg Latency:
-<span id="latency">0</span> ms<br>
+                <div class="metric-box">
+                    <small>Repairs</small>
+                    <strong id="rep">0</strong>
+                </div>
 
-Last Prompt:
-<span id="last">None</span>
+                <div class="metric-box">
+                    <small>Latency</small>
+                    <strong id="lat">0 ms</strong>
+                </div>
 
-</div>
+                <div class="metric-box">
+                    <small>Clarifications</small>
+                    <strong id="clar">0</strong>
+                </div>
 
-<pre id="result">Your generated JSON will appear here.</pre>
+            </div>
+        </section>
 
-<button onclick="copyText()">Copy JSON</button>
+        <!-- OUTPUT -->
+        <section class="section output-panel">
+
+            <div class="output-head">
+                <h3>Generated Output</h3>
+                <button class="btn-copy" onclick="copyText()">Copy JSON</button>
+            </div>
+
+            <pre id="result">Your generated JSON will appear here.</pre>
+
+        </section>
+
+    </div>
 
 </div>
 
 <script>
 
 function fillPrompt(text){
-document.getElementById("prompt").value = text;
+    document.getElementById("prompt").value = text;
 }
 
-async function send(){
+async function generateSchema(){
 
-let prompt = document.getElementById("prompt").value.trim();
+    const prompt = document.getElementById("prompt").value.trim();
 
-if(prompt === ""){
-alert("Please enter your app idea.");
-return;
-}
+    if(prompt === ""){
+        alert("Please enter your product idea.");
+        return;
+    }
 
-document.getElementById("loading").style.display = "block";
-document.getElementById("result").textContent = "";
+    document.getElementById("result").textContent = "Generating...";
 
-try{
+    try{
 
-let res = await fetch('/generate',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body: JSON.stringify({prompt:prompt})
-});
+        const res = await fetch('/generate',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({prompt:prompt})
+        });
 
-let data = await res.json();
+        const data = await res.json();
 
-document.getElementById("result").textContent =
-JSON.stringify(data,null,2);
+        document.getElementById("result").textContent =
+        JSON.stringify(data,null,2);
 
-loadStats();
+        loadStats();
 
-}catch(error){
+    }catch(error){
 
-document.getElementById("result").textContent =
-"Error generating schema.";
+        document.getElementById("result").textContent =
+        "Error generating schema.";
 
-}
-
-document.getElementById("loading").style.display = "none";
+    }
 }
 
 async function loadStats(){
 
-let res = await fetch('/stats');
-let data = await res.json();
+    try{
 
-document.getElementById("req").textContent = data.requests;
-document.getElementById("success").textContent = data.success;
-document.getElementById("fail").textContent = data.failures;
-document.getElementById("latency").textContent = data.avg_latency_ms;
-document.getElementById("last").textContent = data.last_prompt;
+        const res = await fetch('/stats?t=' + Date.now());
+        const data = await res.json();
+
+        document.getElementById("req").textContent  = data.requests || 0;
+        document.getElementById("succ").textContent = data.success || 0;
+        document.getElementById("fail").textContent = data.failures || 0;
+        document.getElementById("rep").textContent  = data.repairs || 0;
+        document.getElementById("lat").textContent  = (data.avg_latency_ms || 0) + " ms";
+        document.getElementById("clar").textContent = data.clarifications || 0;
+
+    }catch(error){
+        console.log(error);
+    }
 }
 
 function copyText(){
-let text = document.getElementById("result").textContent;
-navigator.clipboard.writeText(text);
-alert("Copied!");
+    navigator.clipboard.writeText(
+        document.getElementById("result").textContent
+    );
 }
 
-loadStats();
+window.onload = function(){
+    loadStats();
+    setInterval(loadStats, 3000);
+};
 
 </script>
 
