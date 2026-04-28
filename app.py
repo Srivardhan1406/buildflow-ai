@@ -132,4 +132,5 @@ def get_stats():
 # --------------------
 # Run App
 # --------------------
-app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
