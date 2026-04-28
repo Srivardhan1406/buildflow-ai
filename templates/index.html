@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>BuildFlow AI</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+<h1>BuildFlow AI</h1>
+<p>Generate structured app architecture instantly</p>
+
+<label>Describe your product idea</label>
+
+<input
+type="text"
+id="prompt"
+placeholder="Build ecommerce app with login cart admin dashboard">
+
+<div style="margin-top:10px; font-size:13px;">
+Try:
+<span onclick="fillPrompt('Build CRM app with login dashboard admin')">CRM</span> |
+<span onclick="fillPrompt('Build ecommerce app with login cart payments admin')">Ecommerce</span> |
+<span onclick="fillPrompt('Build job portal with login dashboard admin')">Job Portal</span>
+</div>
+
+<button onclick="send()">Generate Schema</button>
+
+<div id="loading" style="display:none; margin-top:15px;">
+Generating intelligent schema...
+</div>
+
+<!-- Metrics Section -->
+<div style="
+margin-top:18px;
+padding:15px;
+border-radius:14px;
+background:rgba(255,255,255,0.65);
+font-size:14px;
+line-height:1.8;
+">
+
+<b>System Metrics</b><br>
+
+Requests:
+<span id="req">0</span><br>
+
+Success:
+<span id="success">0</span><br>
+
+Failures:
+<span id="fail">0</span><br>
+
+Avg Latency:
+<span id="latency">0</span> ms<br>
+
+Last Prompt:
+<span id="last">None</span>
+
+</div>
+
+<pre id="result">Your generated JSON will appear here.</pre>
+
+<button onclick="copyText()">Copy JSON</button>
+
+</div>
+
+<script>
+
+function fillPrompt(text){
+document.getElementById("prompt").value = text;
+}
+
+async function send(){
+
+let prompt = document.getElementById("prompt").value.trim();
+
+if(prompt === ""){
+alert("Please enter your app idea.");
+return;
+}
+
+document.getElementById("loading").style.display = "block";
+document.getElementById("result").textContent = "";
+
+try{
+
+let res = await fetch('/generate',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body: JSON.stringify({prompt:prompt})
+});
+
+let data = await res.json();
+
+document.getElementById("result").textContent =
+JSON.stringify(data,null,2);
+
+loadStats();
+
+}catch(error){
+
+document.getElementById("result").textContent =
+"Error generating schema.";
+
+}
+
+document.getElementById("loading").style.display = "none";
+}
+
+async function loadStats(){
+
+let res = await fetch('/stats');
+let data = await res.json();
+
+document.getElementById("req").textContent = data.requests;
+document.getElementById("success").textContent = data.success;
+document.getElementById("fail").textContent = data.failures;
+document.getElementById("latency").textContent = data.avg_latency_ms;
+document.getElementById("last").textContent = data.last_prompt;
+}
+
+function copyText(){
+let text = document.getElementById("result").textContent;
+navigator.clipboard.writeText(text);
+alert("Copied!");
+}
+
+loadStats();
+
+</script>
+
+</body>
+</html>
