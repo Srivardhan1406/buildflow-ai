@@ -2,35 +2,16 @@
 
 def generate_schema(design):
 
-    data = {
-        "pages": design["pages"],
-        "database": design["tables"],
-        "roles": design["roles"],
-        "apis": []
+    schema = {
+        "pages": list(set(design["pages"])),
+        "apis": list(set(design["apis"])),
+        "database": list(set(design["database"])),
+        "roles": list(set(design["roles"]))
     }
 
-    if "login" in data["pages"]:
-        data["apis"].append("/login")
+    schema["pages"].sort()
+    schema["apis"].sort()
+    schema["database"].sort()
+    schema["roles"].sort()
 
-    if "admin" in data["pages"]:
-        data["apis"].append("/admin")
-
-    if "cart" in data["pages"]:
-        data["apis"].append("/cart")
-
-    if "products" in data["pages"] or "products" in data["database"]:
-        data["apis"].append("/products")
-
-    if "orders" in data["database"]:
-        data["apis"].append("/orders")
-
-    if "payments" in data["database"]:
-        data["apis"].append("/payment")
-
-    if "contacts" in data["database"]:
-        data["apis"].append("/contacts")
-
-    if "jobs" in data["database"]:
-        data["apis"].append("/jobs")
-
-    return data
+    return schema

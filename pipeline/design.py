@@ -4,41 +4,74 @@ def create_design(intent):
 
     design = {
         "pages": ["home"],
-        "roles": ["user"],
-        "tables": ["users"],
-        "flows": []
+        "apis": [],
+        "database": [],
+        "roles": ["user"]
     }
 
-    if intent["needs_login"]:
+    # Core
+    if intent["login"]:
         design["pages"].append("login")
-        design["flows"].append("authentication")
+        design["apis"].append("/login")
+        design["database"].append("users")
 
-    if intent["needs_dashboard"]:
+    if intent["dashboard"]:
         design["pages"].append("dashboard")
 
-    if intent["needs_admin"]:
+    if intent["admin"]:
         design["pages"].append("admin")
+        design["apis"].append("/admin")
         design["roles"].append("admin")
 
-    if intent["needs_cart"]:
-        design["pages"].append("cart")
-        design["tables"].append("cart")
+    if intent["payment"]:
+        design["apis"].append("/payment")
+        design["database"].append("payments")
 
-    if intent["needs_payment"]:
-        design["pages"].append("pricing")
-        design["tables"].append("payments")
-        design["flows"].append("payment_gateway")
-
-    if intent["is_crm"]:
+    # CRM
+    if intent["crm"]:
         design["pages"].append("contacts")
-        design["tables"].append("contacts")
+        design["apis"].append("/contacts")
+        design["database"].append("contacts")
 
-    if intent["is_ecommerce"]:
+    # Ecommerce
+    if intent["ecommerce"]:
         design["pages"].append("products")
-        design["tables"].extend(["products", "orders"])
+        design["pages"].append("cart")
+        design["apis"].append("/products")
+        design["apis"].append("/cart")
+        design["database"].append("products")
+        design["database"].append("cart")
 
-    if intent["is_job_portal"]:
+    # Job Portal
+    if intent["job_portal"]:
         design["pages"].append("jobs")
-        design["tables"].append("jobs")
+        design["apis"].append("/jobs")
+        design["database"].append("jobs")
+
+    # Hospital
+    if intent["hospital"]:
+        design["pages"].append("patients")
+        design["pages"].append("appointments")
+        design["apis"].append("/patients")
+        design["apis"].append("/appointments")
+        design["database"].append("patients")
+        design["database"].append("appointments")
+        design["roles"].append("doctor")
+
+    # Edtech
+    if intent["edtech"]:
+        design["pages"].append("courses")
+        design["pages"].append("progress")
+        design["apis"].append("/courses")
+        design["apis"].append("/progress")
+        design["database"].append("courses")
+        design["database"].append("progress")
+
+    # Marketplace
+    if intent["marketplace"]:
+        design["pages"].append("listings")
+        design["apis"].append("/listings")
+        design["database"].append("listings")
+        design["roles"].append("seller")
 
     return design

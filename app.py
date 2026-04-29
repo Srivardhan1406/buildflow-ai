@@ -4,6 +4,7 @@ from pipeline.design import create_design
 from pipeline.schema import generate_schema
 from pipeline.validate import validate_schema
 from pipeline.repair import repair_schema
+from pipeline.runtime import simulate_runtime
 import time
 import os
 
@@ -105,25 +106,34 @@ def generate():
         # Stage 5: Repair
         # ---------------------------------
         before_pages = len(schema["pages"])
+
         schema = repair_schema(schema)
+
         after_pages = len(schema["pages"])
 
         if before_pages != after_pages:
             stats["repairs"] += 1
 
         # ---------------------------------
+        # Stage 6: Runtime Simulation
+        # ---------------------------------
+        runtime = simulate_runtime(schema)
+
+        # ---------------------------------
         # Final Metadata
         # ---------------------------------
         schema["status"] = "success"
         schema["deterministic"] = True
-        schema["runtime_ready"] = True
+        schema["runtime_ready"] = runtime["runtime_ready"]
+        schema["runtime_checks"] = runtime["runtime_checks"]
 
         schema["pipeline_trace"] = {
             "stage_1": "intent_extraction",
             "stage_2": "system_design",
             "stage_3": "schema_generation",
             "stage_4": "validation",
-            "stage_5": "repair"
+            "stage_5": "repair",
+            "stage_6": "runtime_simulation"
         }
 
         # ---------------------------------
@@ -139,6 +149,7 @@ def generate():
         return jsonify(schema)
 
     except Exception as e:
+
         stats["failures"] += 1
 
         latency = int((time.time() - start) * 1000)
