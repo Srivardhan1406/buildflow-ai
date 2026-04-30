@@ -1,53 +1,16 @@
-# pipeline/intent.py
+import os, json
+from groq import Groq
+from dotenv import load_dotenv
+load_dotenv()
+
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def extract_intent(prompt):
-
-    text = prompt.lower()
-
-    intent = {
-        "login": False,
-        "admin": False,
-        "payment": False,
-        "dashboard": False,
-        "crm": False,
-        "ecommerce": False,
-        "job_portal": False,
-        "hospital": False,
-        "edtech": False,
-        "marketplace": False
-    }
-
-    # Core
-    if "login" in text or "auth" in text:
-        intent["login"] = True
-
-    if "admin" in text or "analytics" in text:
-        intent["admin"] = True
-
-    if "payment" in text or "billing" in text or "subscription" in text:
-        intent["payment"] = True
-
-    if "dashboard" in text:
-        intent["dashboard"] = True
-
-    # Existing Domains
-    if "crm" in text or "contacts" in text:
-        intent["crm"] = True
-
-    if "ecommerce" in text or "cart" in text or "products" in text:
-        intent["ecommerce"] = True
-
-    if "job" in text or "portal" in text or "recruitment" in text:
-        intent["job_portal"] = True
-
-    # New Domains
-    if "hospital" in text or "doctor" in text or "patient" in text:
-        intent["hospital"] = True
-
-    if "course" in text or "student" in text or "quiz" in text or "edtech" in text:
-        intent["edtech"] = True
-
-    if "marketplace" in text or "seller" in text or "buyer" in text:
-        intent["marketplace"] = True
-
-    return intent
+    r = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role":"user","content":f"""Extract app intent. Return JSON only, no markdown:
+{{"app_name":"str","features":["str"],"entities":["str"],"roles":["str"],"has_payments":true,"auth_type":"email_password"}}
+App: {prompt}"""}]
+    )
+    text = r.choices[0].message.content.strip().replace("```json","").replace("```","").strip()
+    return json.loads(text)

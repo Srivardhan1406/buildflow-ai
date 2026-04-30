@@ -1,255 +1,246 @@
 # 🚀 BuildFlow AI
 
-BuildFlow AI is a compiler-style AI platform that transforms natural language product ideas into structured, validated, runtime-ready application schemas.
-
-Unlike simple prompt wrappers, BuildFlow AI uses a multi-stage deterministic generation pipeline focused on reliability, control, and execution readiness.
+BuildFlow AI is a compiler-style AI platform that transforms natural language product ideas into structured, validated, runtime-ready application schemas using a multi-stage LLM pipeline powered by Groq.
 
 ---
 
-# 🌐 Live Demo
+## 🌐 Live Demo
 
 [https://buildflow-ai-bepz.onrender.com](https://buildflow-ai-bepz.onrender.com)
 
 ---
 
-# 🎯 Objective
+## 🎯 Objective
 
 Convert prompts like:
 
-Build a CRM with login, contacts, dashboard, role-based access, and premium plan with payments. Admins can see analytics.
+> "Build a job portal with login, jobs, admin and payments"
 
-Into:
+Into complete structured schemas:
 
-* UI Schema
-* API Schema
-* Database Schema
-* Roles & Permissions
-* Validation Checks
-* Repair Logic
-* Runtime-Ready Output
+- UI Schema (pages, routes, components)
+- API Schema (endpoints, methods, roles, fields)
+- Database Schema (tables, columns, types, primary keys)
+- Auth Schema (JWT, roles, permissions)
+- Validation Report
+- Runtime-Ready Output
 
 ---
 
-# 🧠 Core Architecture
+## 🧠 Core Architecture
 
+```
 Natural Language Prompt
-↓
-Intent Extraction
-↓
-System Design Layer
-↓
-Schema Generation
-↓
-Validation Engine
-↓
-Repair Engine
-↓
-Reliable JSON Output
-↓
-Metrics + Runtime Ready Response
+        ↓
+Stage 1 — Intent Extraction      (LLM: features, entities, roles)
+        ↓
+Stage 2 — System Design          (LLM: pages, APIs, DB, roles)
+        ↓
+Stage 3 — Schema Generation      (LLM: UI + API + DB + Auth schemas)
+        ↓
+Stage 4 — Validation Engine      (rule-based cross-layer checks)
+        ↓
+Stage 5 — Repair Engine          (LLM: fixes only broken parts)
+        ↓
+Stage 6 — Runtime Simulation     (verifies output is executable)
+        ↓
+Final Validated JSON Output
+```
 
 ---
 
-# ⚙️ Multi-Stage Pipeline
+## ⚙️ Multi-Stage Pipeline
 
-## 1. Intent Extraction
+### Stage 1 — Intent Extraction
+LLM parses the prompt into structured intent:
+- app name, features, entities, roles
+- has_payments, auth_type
 
-Parses user prompt into structured intent signals.
+### Stage 2 — System Design
+LLM converts intent into architecture:
+- pages with routes and auth rules
+- API endpoints with methods and roles
+- database tables with columns
+- role definitions with permissions
 
-Detects:
+### Stage 3 — Schema Generation
+LLM produces 4 detailed schemas:
 
-* login
-* admin
-* dashboard
-* payments
-* ecommerce
-* CRM
-* job portal
-* cart
-* premium plans
-
-## 2. System Design Layer
-
-Transforms intent into architecture:
-
-* pages
-* modules
-* user roles
-* data entities
-* business flows
-
-## 3. Schema Generation
-
-Produces structured JSON:
-
+```json
 {
-"pages": [],
-"apis": [],
-"database": [],
-"roles": []
+  "ui_schema":   [...],
+  "api_schema":  [...],
+  "db_schema":   [...],
+  "auth_schema": {...}
 }
+```
 
-## 4. Validation Engine
+### Stage 4 — Validation Engine
+Rule-based checks across all layers:
+- Every DB table has a primary key
+- All API roles exist in auth schema
+- Response fields match DB columns
+- No empty schemas
 
-Guarantees:
+### Stage 5 — Repair Engine
+LLM fixes only the broken parts — no full retry:
+- Targeted repair using exact error messages
+- Preserves correct schemas untouched
 
-* valid JSON
-* required fields exist
-* correct data types
-* non-empty critical sections
-* structural consistency
-
-## 5. Repair Engine
-
-Automatically fixes:
-
-* duplicate values
-* missing home page
-* missing user role
-* missing login API
-* missing payment API
-
-Without blindly regenerating the full output.
+### Stage 6 — Runtime Simulation
+Verifies the output is executable:
+- All schema keys present and non-empty
+- No validation errors remaining
+- Returns `runtime_ready: true`
 
 ---
 
-# 🛡️ Reliability Features
+## 🛡️ Reliability Features
 
-✅ Deterministic behavior
-✅ Multi-stage modular pipeline
-✅ Validation + repair
-✅ Runtime usable output
-✅ Metrics observability
-✅ Handles vague prompts
-✅ Production deployment ready
-
----
-
-# 🤖 Clarification Handling
-
-If input is vague:
-
-Build app
-
-System responds with:
-
-* What type of app?
-* Need login?
-* Need payments?
-* Need admin dashboard?
-* Who are the users?
+✅ Multi-stage LLM pipeline (not a single prompt)  
+✅ Cross-layer validation (API ↔ DB ↔ Auth ↔ UI)  
+✅ Intelligent repair (fixes only what's broken)  
+✅ Deterministic structure (same input → consistent output)  
+✅ Runtime-ready output (no manual fixes needed)  
+✅ Metrics observability  
+✅ Production deployment ready  
 
 ---
 
-# 📊 Metrics Endpoint
+## 📊 Metrics
 
-Tracks:
+Tracked at `/stats`:
 
-* total requests
-* successful generations
-* clarifications
-* failures
-* repairs
-* average latency
-
-Endpoint:
-
-/stats
+- Total requests
+- Successful generations
+- Failures
+- Repairs triggered
+- Average latency (ms)
 
 ---
 
-# 🧪 Example Output
+## 🧪 Example Output
 
+```json
 {
-"pages": ["home", "login", "dashboard", "admin"],
-"apis": ["/login", "/admin", "/payment"],
-"database": ["users", "payments"],
-"roles": ["user", "admin"],
-"status": "success",
-"runtime_ready": true
+  "ui_schema": [
+    {"page": "Login", "route": "/login", "auth_required": false, "components": [...]}
+  ],
+  "api_schema": [
+    {"method": "POST", "path": "/api/login", "roles": ["user", "admin"], "response": {"fields": ["token"]}}
+  ],
+  "db_schema": [
+    {"table": "users", "columns": [{"name": "id", "type": "UUID", "primary_key": true}]}
+  ],
+  "auth_schema": {
+    "method": "jwt",
+    "token_expiry_hours": 24,
+    "roles": [{"name": "admin", "permissions": ["read:all", "write:all"]}]
+  },
+  "valid": true,
+  "validation_errors": [],
+  "runtime_ready": true,
+  "latency_ms": 7529
 }
+```
 
 ---
 
-# 💻 Tech Stack
+## 💻 Tech Stack
 
-* Python
-* Flask
-* HTML
-* CSS
-* JavaScript
-* Render
-* GitHub
+- Python + Flask
+- Groq API (Llama 3.3 70B) — free, fast inference
+- Rule-based validation engine
+- Render (deployment)
+- GitHub
 
 ---
 
-# 📁 Project Structure
+## 📁 Project Structure
 
+```
 buildflow-ai/
-│── app.py
-│── requirements.txt
-│── README.md
-
+├── app.py
+├── requirements.txt
+├── README.md
 ├── pipeline/
-│   ├── intent.py
-│   ├── design.py
-│   ├── schema.py
-│   ├── validate.py
-│   └── repair.py
-
+│   ├── intent.py      Stage 1: intent extraction
+│   ├── design.py      Stage 2: system design
+│   ├── schema.py      Stage 3: schema generation
+│   ├── validate.py    Stage 4: validation engine
+│   ├── repair.py      Stage 5: repair engine
+│   └── runtime.py     Stage 6: runtime simulation
 ├── templates/
 │   └── index.html
-
 └── static/
-└── style.css
+    └── style.css
+```
 
 ---
 
-# ▶️ Run Locally
+## ▶️ Run Locally
 
+```
 pip install -r requirements.txt
+```
+
+Create `.env` file:
+```
+GROQ_API_KEY
+```
+
+Run:
+```
 python app.py
+```
 
-Open:
-
-[http://127.0.0.1:5000](http://127.0.0.1:5000)
+Open: http://127.0.0.1:5000
 
 ---
 
-# 🚀 Deployment
+## 🚀 Deployment
 
 Hosted on Render using:
-
+```
 gunicorn app:app
+```
 
 ---
 
-# 📈 Future Improvements
+## 📈 Tradeoffs
 
-* LLM-powered intent extraction
-* SQL schema generator
-* React UI generation
-* Backend code export
-* Full app scaffolding
-* Agentic refinement loop
+| Factor | Decision |
+|--------|----------|
+| Latency | ~7s for 4 LLM calls — acceptable for schema generation |
+| Cost | Free using Groq |
+| Quality | Detailed schemas with cross-layer consistency |
+| Reliability | Auto-repair ensures valid output always returned |
 
 ---
 
-# 🧠 Why This Project Stands Out
+## 📈 Future Improvements
+
+- SQL migration file export
+- React component generation
+- Backend code scaffolding
+- Agentic refinement loop
+- Support for more domains
+
+---
+
+## 🧠 Why This Stands Out
 
 This is not a basic prompt-to-JSON demo.
 
 It is an engineered AI system emphasizing:
-
-* control
-* consistency
-* reliability
-* modular generation
-* execution readiness
-* measurable performance
+- LLM control and structured output
+- Cross-layer schema consistency
+- Intelligent targeted repair
+- Measurable reliability metrics
+- Execution-ready output
 
 ---
 
-# 👨‍💻 Author
+## 👨‍💻 Author
 
 Sri Vardhan

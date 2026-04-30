@@ -1,17 +1,19 @@
-# pipeline/schema.py
+import os, json
+from groq import Groq
+from dotenv import load_dotenv
+load_dotenv()
+
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def generate_schema(design):
-
-    schema = {
-        "pages": list(set(design["pages"])),
-        "apis": list(set(design["apis"])),
-        "database": list(set(design["database"])),
-        "roles": list(set(design["roles"]))
-    }
-
-    schema["pages"].sort()
-    schema["apis"].sort()
-    schema["database"].sort()
-    schema["roles"].sort()
-
-    return schema
+    r = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role":"user","content":f"""Generate detailed schemas. Return JSON only, no markdown:
+{{"ui_schema":[{{"page":"str","route":"str","auth_required":true,"components":[{{"type":"str","label":"str","fields":["str"]}}]}}],
+"api_schema":[{{"method":"str","path":"str","auth":true,"roles":["str"],"request":{{"body":["str"]}},"response":{{"fields":["str"]}}}}],
+"db_schema":[{{"table":"str","columns":[{{"name":"str","type":"str","primary_key":false,"nullable":true}}]}}],
+"auth_schema":{{"method":"jwt","token_expiry_hours":24,"roles":[{{"name":"str","permissions":["str"]}}]}}}}
+Design: {json.dumps(design)}"""}]
+    )
+    text = r.choices[0].message.content.strip().replace("```json","").replace("```","").strip()
+    return json.loads(text)

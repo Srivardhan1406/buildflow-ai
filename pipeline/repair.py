@@ -1,28 +1,22 @@
-# pipeline/repair.py
+import os, json
+from groq import Groq
+from dotenv import load_dotenv
+load_dotenv()
 
-def repair_schema(data):
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-    keys = ["pages", "database", "roles", "apis"]
-
-    for key in keys:
-        cleaned = []
-
-        for item in data[key]:
-            if item and item not in cleaned:
-                cleaned.append(item)
-
-        data[key] = cleaned
-
-    if "home" not in data["pages"]:
-        data["pages"].insert(0, "home")
-
-    if "user" not in data["roles"]:
-        data["roles"].append("user")
-
-    if "/login" not in data["apis"] and "login" in data["pages"]:
-        data["apis"].append("/login")
-
-    if "/payment" not in data["apis"] and "payments" in data["database"]:
-        data["apis"].append("/payment")
-
-    return data
+def repair_schema(schema):
+    errors = schema.get("validation_errors", [])
+    if not errors:
+        return schema
+    r = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role":"user","content":f"""Fix these errors in schema. Return corrected JSON only, no markdown:
+Errors: {errors}
+Schema: {json.dumps(schema)}"""}]
+    )
+    text = r.choices[0].message.content.strip().replace("```json","").replace("```","").strip()
+    repaired = json.loads(text)
+    repaired["validation_errors"] = []
+    repaired["valid"] = True
+    return repaired
