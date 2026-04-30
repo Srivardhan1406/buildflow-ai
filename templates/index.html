@@ -149,9 +149,20 @@ async function loadStats(){
 }
 
 function copyText(){
-    navigator.clipboard.writeText(
-        document.getElementById("result").textContent
-    );
+    const text = document.getElementById("result").textContent;
+    if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(function(){
+            alert("Copied!");
+        });
+    } else {
+        const el = document.createElement("textarea");
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+        alert("Copied!");
+    }
 }
 
 window.onload = function(){
